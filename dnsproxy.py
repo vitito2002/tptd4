@@ -1,6 +1,7 @@
 import argparse
 from scapy.all import *
 from socket import *
+from scapy.layers.dns import DNS, DNSQR
 
 
 def dns_proxy(remote_dns_ip, local_port):
