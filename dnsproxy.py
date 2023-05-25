@@ -13,14 +13,20 @@ def dns_proxy(remote_dns_ip, local_port):
         args = parser.parse_args()
 
         udp_socket = socket(AF_INET, SOCK_DGRAM)
-        udp_socket.bind(('0.0.0.0', '53'))
+        udp_socket.bind(('0.0.0.0', '53')) #preguntar xq es 53
         # Assign a port number (predeterminado) and Bind the socket to server address and server port
         # Listen to at most 1 connection at a time
         udp_socket.listen(1)
-
+        
+        while True:
+            print ("server is ready to receive")
+            #Set up a new connection from the client
+            query_and_ip = udp_socket.recvfrom() #preguntar max del datagrama
+            
+'''
         if pkt.haslayer(DNSQR): #error viene de importar scapy.all creo
         # Obtener la consulta DNS del paquete recibido
-        query_dns = pkt[DNSQR].qname.decode()
+            query_dns = pkt[DNSQR].qname.decode()
 
         # Enviar la consulta al servidor DNS remoto
         response = sr1(IP(dst=remote_dns_ip) / UDP(dport=53) / DNS(rd=1, qd=DNSQR(qname=query_dns)), verbose=False)
@@ -51,6 +57,8 @@ def dns_proxy(remote_dns_ip, local_port):
         udp_socket.close()
         print("Servidor proxy DNS detenido.")
 
-
+    
+        
 if __name__ == "__main__":
     dns_proxy(args.remote_dns_ip, args.local_port)
+'''
