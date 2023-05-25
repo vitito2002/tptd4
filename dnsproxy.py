@@ -3,26 +3,42 @@ from scapy.all import *
 from socket import *
 from scapy.layers.dns import DNS, DNSQR
 
+parser = argparse.ArgumentParser(description="Servidor proxy DNS")
+parser.add_argument("-s", "--server", nargs='1', dest="remote_dns_ip", required=True, help="Dirección IP del servidor DNS remoto")
+parser.add_argument("-p", "--port", nargs='+',dest="local_port", type=int, default=53, help="Puerto local para escuchar las consultas DNS entrantes")
+args = parser.parse_args()
 
-def dns_proxy(remote_dns_ip, local_port):
-    #funcion que procesa el mensaje y verifica que haya una query dns, si la hay la procesa
-    def handle_dns_query(pkt):
-        parser = argparse.ArgumentParser(description="Servidor proxy DNS")
-        parser.add_argument("-s", "--server", nargs='1', dest="remote_dns_ip", required=True, help="Dirección IP del servidor DNS remoto")
-        parser.add_argument("-p", "--port", nargs='+',dest="local_port", type=int, default=53, help="Puerto local para escuchar las consultas DNS entrantes")
-        args = parser.parse_args()
-
-        udp_socket = socket(AF_INET, SOCK_DGRAM)
-        udp_socket.bind(('0.0.0.0', '53')) #preguntar xq es 53
+#def dns_proxy(remote_dns_ip, local_port):
+    
+udp_socket = socket(AF_INET, SOCK_DGRAM)
+udp_socket.bind(('0.0.0.0', '53')) #preguntar xq es 53
         # Assign a port number (predeterminado) and Bind the socket to server address and server port
         # Listen to at most 1 connection at a time
-        udp_socket.listen(1)
+udp_socket.listen(1)
         
-        while True:
-            print ("server is ready to receive")
-            #Set up a new connection from the client
+print ("server is ready to receive")
+
+    #funcion que procesa el mensaje y verifica que haya una query dns, si la hay la procesa
+'''   
+        def handle_dns_query(pkt):
+        
+        while True:            #Set up a new connection from the client
             query_and_ip = udp_socket.recvfrom() #preguntar max del datagrama
             
+            packet_length_bytes = socket.recv(2)
+            packet_length = struct.unpack('!H', packet_length_bytes)[0]
+
+            # Lee el paquete DNS completo
+            dns_packet = socket.recv(packet_length)
+
+            # Analiza el paquete DNS para obtener la consulta
+            dns_id = struct.unpack('!H', dns_packet[:2])[0]
+            dns_flags = struct.unpack('!H', dns_packet[2:4])[0]
+            # Resto de la extracción de campos DNS según la estructura del paquete
+
+            # Devuelve la consulta DNS
+            return dns_packet 
+'''
 '''
         if pkt.haslayer(DNSQR): #error viene de importar scapy.all creo
         # Obtener la consulta DNS del paquete recibido
