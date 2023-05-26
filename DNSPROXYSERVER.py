@@ -5,14 +5,19 @@ import argparse
 from scapy.layers.dns import DNS, DNSQR, UDP, IP
 
 class DNSProxy:
-    def __init__(self, remote_dns_ip, default_mappings):
+    def _init_(self, remote_dns_ip, default_mappings):
         self.remote_dns_ip = remote_dns_ip
-        self.default_mappings = default_mappings
+        self.default_mappings = default_mappings or {}
+
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.server_socket.bind(('', 53))
 
     def handle_dns_query(self, client_query):
         dns_query = IP(dst=remote_dns_ip) / UDP(sport=RandShort(), dport=53) / client_query[DNS]
-        
+        # IP(dst=remote_dns_ip): establece la dirección de destino (dst) del paquete como la dirección IP del servidor DNS remoto.
+        #UDP(sport=RandShort(), dport=53):se establece el puerto de origen aleatoriamente.
+        #client_query[DNS]:accede al campo DNS, viendo los registros
+
         if client_query[DNSQR].qname.decode() in default_mappings: #si esta mapeada la query se genera la respuesta predeterminada
             dns_response = IP() / UDP() / DNS(rd=1, id=client_query[DNS].id, qr=1, qdcount=1, ancount=1, qd=DNSQR(qname=client_query[DNSQR].qname), an=DNSRR(rrname=client_query[DNSQR].qname, ttl=10, rdata=default_mappings[client_query[DNSQR].qname]))
         else:
@@ -21,7 +26,6 @@ class DNSProxy:
         self.server_socket.sendto(bytes(dns_response), self.client_address)
 
     def start_dns_proxy(self):
-        self.server_socket.bind(('', 53))
 
         print("DNS Proxy server is running...")
 
@@ -38,8 +42,8 @@ def parse_arguments():
     parser.add_argument('-s', '--remote-dns', help='Remote DNS server IP', required=True)
     parser.add_argument('-d', '--default-mapping', nargs=2, action='append', metavar=('domain', 'ip'), help='Default domain-to-IP mappings')
     return parser.parse_args()
-
-if __name__ == "__main__":
+    
+if _name_ == "_main_":
     args = parse_arguments() #obtengo arg x linea de comando
     remote_dns_ip = args.remote_dns #Se extrae la dirección IP del servidor DNS remoto de los argumentos.
     
