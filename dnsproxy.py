@@ -11,12 +11,35 @@ args = parser.parse_args()
 #def dns_proxy(remote_dns_ip, local_port):
     
 udp_socket = socket(AF_INET, SOCK_DGRAM)
-udp_socket.bind(('0.0.0.0', '53')) #preguntar xq es 53
+udp_socket.bind(('', '53')) #preguntar xq es 53
+print ("server is ready to receive")
+    
+while True:
+    '''
+    message tiene la data del paquete
+    clientAdress tiene la IP y el puerto del cliente
+    '''
+    message, clientAdress = udp_socket.recvfrom 
+    mensaje_modificado = message.decode().upper()
+    '''ahora decodificamos la direccion y lo guardamos para despues responderle al cliente'''
+
+    mapeoPredeterminado = {'1.1.1.1'}
+    respuestaPredeterminada = " www.utdt.edu"
+    try:
+        # Capturar y manejar las consultas DNS entrantes
+        while True:
+            data, addr = udp_socket.recvfrom(1024)
+            data.decode()
+            if (data == mapeoPredeterminado):
+                udp_socket.sendto(respuestaPredeterminada, addr)
+    except KeyboardInterrupt:
+        udp_socket.close()
+        print("Servidor proxy DNS detenido.")
+    
+
         # Assign a port number (predeterminado) and Bind the socket to server address and server port
         # Listen to at most 1 connection at a time
-udp_socket.listen(1)
         
-print ("server is ready to receive")
 
     #funcion que procesa el mensaje y verifica que haya una query dns, si la hay la procesa
 '''   
