@@ -1,103 +1,56 @@
-import argparse
+import socket
+import sys
 from scapy.all import *
-from socket import *
-from scapy.layers.dns import DNS, DNSQR
+import argparse
+from scapy.layers.dns import DNS, DNSQR, UDP, IP
 
-parser = argparse.ArgumentParser(description="Servidor proxy DNS")
-parser.add_argument("-s", "--server", nargs='1', dest="remote_dns_ip", required=True, help="Dirección IP del servidor DNS remoto")
-parser.add_argument("-p", "--port", nargs='+',dest="local_port", type=int, default=53, help="Puerto local para escuchar las consultas DNS entrantes")
-args = parser.parse_args()
+class DNSProxy:
+    def _init_(self, remote_dns_ip, default_mappings):
+        self.remote_dns_ip = remote_dns_ip
+        self.default_mappings = default_mappings or {}
 
-#def dns_proxy(remote_dns_ip, local_port):
-    
-udp_socket = socket(AF_INET, SOCK_DGRAM)
-udp_socket.bind(('', '53')) #preguntar xq es 53
-print ("server is ready to receive")
-    
-while True:
-    '''
-    message tiene la data del paquete
-    clientAdress tiene la IP y el puerto del cliente
-    '''
-    message, clientAdress = udp_socket.recvfrom 
-    mensaje_modificado = message.decode().upper()
-    '''ahora decodificamos la direccion y lo guardamos para despues responderle al cliente'''
+        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.server_socket.bind(('', 53))
 
-    mapeoPredeterminado = {'1.1.1.1'}
-    respuestaPredeterminada = " www.utdt.edu"
-    try:
-        # Capturar y manejar las consultas DNS entrantes
+    def handle_dns_query(self, client_query):
+        dns_query = IP(dst=remote_dns_ip) / UDP(sport=RandShort(), dport=53) / client_query[DNS]
+        # IP(dst=remote_dns_ip): establece la dirección de destino (dst) del paquete como la dirección IP del servidor DNS remoto.
+        #UDP(sport=RandShort(), dport=53):se establece el puerto de origen aleatoriamente.
+        #client_query[DNS]:accede al campo DNS, viendo los registros
+
+        if client_query[DNSQR].qname.decode() in default_mappings: #si esta mapeada la query se genera la respuesta predeterminada
+            dns_response = IP() / UDP() / DNS(rd=1, id=client_query[DNS].id, qr=1, qdcount=1, ancount=1, qd=DNSQR(qname=client_query[DNSQR].qname), an=DNSRR(rrname=client_query[DNSQR].qname, ttl=10, rdata=default_mappings[client_query[DNSQR].qname]))
+        else:
+            dns_response = sr1(dns_query, verbose=0) #envía la consulta al servidor DNS remoto y espera la respuesta.
+        
+        self.server_socket.sendto(bytes(dns_response), self.client_address)
+
+    def start_dns_proxy(self):
+
+        print("DNS Proxy server is running...")
+
         while True:
-            data, addr = udp_socket.recvfrom(1024)
-            data.decode()
-            if (data == mapeoPredeterminado):
-                udp_socket.sendto(respuestaPredeterminada, addr)
-    except KeyboardInterrupt:
-        udp_socket.close()
-        print("Servidor proxy DNS detenido.")
+            data, address = self.server_socket.recvfrom(4096)
+            client_query = IP(data)
+            client_address = address
+            socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+            self.handle_dns_query(client_query, remote_dns_ip, default_mappings)
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="DNS Proxy Server")
+    parser.add_argument('-s', '--remote-dns', help='Remote DNS server IP', required=True)
+    parser.add_argument('-d', '--default-mapping', nargs=2, action='append', metavar=('domain', 'ip'), help='Default domain-to-IP mappings')
+    return parser.parse_args()
     
-
-        # Assign a port number (predeterminado) and Bind the socket to server address and server port
-        # Listen to at most 1 connection at a time
-        
-
-    #funcion que procesa el mensaje y verifica que haya una query dns, si la hay la procesa
-'''   
-        def handle_dns_query(pkt):
-        
-        while True:            #Set up a new connection from the client
-            query_and_ip = udp_socket.recvfrom() #preguntar max del datagrama
-            
-            packet_length_bytes = socket.recv(2)
-            packet_length = struct.unpack('!H', packet_length_bytes)[0]
-
-            # Lee el paquete DNS completo
-            dns_packet = socket.recv(packet_length)
-
-            # Analiza el paquete DNS para obtener la consulta
-            dns_id = struct.unpack('!H', dns_packet[:2])[0]
-            dns_flags = struct.unpack('!H', dns_packet[2:4])[0]
-            # Resto de la extracción de campos DNS según la estructura del paquete
-
-            # Devuelve la consulta DNS
-            return dns_packet 
-'''
-'''
-        if pkt.haslayer(DNSQR): #error viene de importar scapy.all creo
-        # Obtener la consulta DNS del paquete recibido
-            query_dns = pkt[DNSQR].qname.decode()
-
-        # Enviar la consulta al servidor DNS remoto
-        response = sr1(IP(dst=remote_dns_ip) / UDP(dport=53) / DNS(rd=1, qd=DNSQR(qname=query_dns)), verbose=False)
- 
-        if response:
-            # Enviar la respuesta recibida del servidor DNS remoto al cliente original
-            send(response, verbose=False)
-       
-
-   
-    # crear socket salida poner en el while
-    udp_socket = socket(AF_INET, SOCK_DGRAM)
-    udp_socket.bind(('0.0.0.0', '53'))
-
-
-    print(f"Servidor proxy DNS en ejecución. Escuchando en el puerto {local_port}...")
-
-
-    mapeopredeterminado = {'1.1.1.1'}
-
-    try:
-        # Capturar y manejar las consultas DNS entrantes
-        while True:
-            data, addr = udp_socket.recvfrom(1024)
-            pkt = IP(data)
-            handle_dns_query(pkt)
-    except KeyboardInterrupt:
-        udp_socket.close()
-        print("Servidor proxy DNS detenido.")
-
+if _name_ == "_main_":
+    args = parse_arguments() #obtengo arg x linea de comando
+    remote_dns_ip = args.remote_dns #Se extrae la dirección IP del servidor DNS remoto de los argumentos.
     
-        
-if __name__ == "__main__":
-    dns_proxy(args.remote_dns_ip, args.local_port)
-'''
+    default_mappings = {} #Se crea un diccionario vacío para almacenar los mapeos predeterminados de dominios a direcciones IP.
+    if args.default_mapping: #Si se proporcionaron mapeos predeterminados a través de los argumentos de línea de comando, se itera sobre ellos y se agrega al diccionario
+        for domain, ip in args.default_mapping:
+            default_mappings[domain] = ip
+
+    dns_proxy_server = DNSProxy(remote_dns_ip, default_mappings)#Se crea una instancia de la clase DNSProxyServer pasando la dirección IP del servidor DNS remoto y los mapeos predeterminados.
+    dns_proxy_server.start_dns_proxy() #Se llama al método start() de la instancia dns_proxy_server para iniciar el servidor DNS proxy.
