@@ -16,7 +16,7 @@ class DNSProxy:
         dns_query = IP(dst=remote_dns_ip) / UDP(sport=RandShort(), dport=53) / client_query[DNS]
         # IP(dst=remote_dns_ip): establece la dirección de destino (dst) del paquete como la dirección IP del servidor DNS remoto.
         #UDP(sport=RandShort(), dport=53):se establece el puerto de origen aleatoriamente.
-        #client_query[DNS]:accede al campo DNS, viendo los registros
+        #client_query[DNS]:accede al campo DNS, viendo los registross
 
         if client_query[DNSQR].qname.decode() in default_mappings: #si esta mapeada la query se genera la respuesta predeterminada
             dns_response = IP() / UDP() / DNS(rd=1, id=client_query[DNS].id, qr=1, qdcount=1, ancount=1, qd=DNSQR(qname=client_query[DNSQR].qname), an=DNSRR(rrname=client_query[DNSQR].qname, ttl=10, rdata=default_mappings[client_query[DNSQR].qname]))
