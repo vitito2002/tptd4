@@ -1,4 +1,5 @@
 import socket
+from socket import *
 import sys
 from scapy.all import *
 import argparse
@@ -43,7 +44,7 @@ def parse_arguments():
     parser.add_argument('-d', '--default-mapping', nargs=2, action='append', metavar=('domain', 'ip'), help='Default domain-to-IP mappings')
     return parser.parse_args()
     
-if __name__ == "_main_":
+if _name_ == "_main_":
     args = parse_arguments() #obtengo arg x linea de comando
     remote_dns_ip = args.remote_dns #Se extrae la dirección IP del servidor DNS remoto de los argumentos.
     
