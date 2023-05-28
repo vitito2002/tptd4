@@ -18,7 +18,7 @@ def dns_proxy(remote_dns_ip, local_port):
         else:
             udp_client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             udp_client_socket.sendto(data_cliente, (remote_dns_ip, 53))
-            data_servidor, addr_servidor = udp_client_socket.recvfrom(4096)
+            data_servidor = udp_client_socket.recvfrom(4096)[0] # el segundo elemento de la tupla (addr del servidor DNS) no lo necesito
             udp_client_socket.close()
             udp_socket.sendto(data_servidor, addr_cliente)
 
