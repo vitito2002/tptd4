@@ -1,17 +1,8 @@
 import socket
 import threading
 import argparse
-#from funciones import*
-
-def config_predet(lista:list):
-    res: dict = {}
-    for direccion in lista:
-        separador = ":"
-        resultado = direccion.split(separador)
-        if len(resultado) == 2:
-            clave, valor = resultado
-            res[clave] = valor
-    return res
+from funciones import*
+from scapy.all import DNS, DNSQR, DNSRR, IP, send, sniff, sr1, UDP
 
 parser = argparse.ArgumentParser(description="Servidor proxy DNS")
 parser.add_argument("-s", "--server", required=True, help="Dirección IP del servidor DNS remoto")
