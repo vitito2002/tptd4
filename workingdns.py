@@ -1,37 +1,51 @@
 import socket
 import threading
 import argparse
+#from funciones import*
+
+def config_predet(lista:list):
+    res: dict = {}
+    for direccion in lista:
+        separador = ":"
+        resultado = direccion.split(separador)
+        if len(resultado) == 2:
+            clave, valor = resultado
+            res[clave] = valor
+    return res
 
 parser = argparse.ArgumentParser(description="Servidor proxy DNS")
 parser.add_argument("-s", "--server", required=True, help="Dirección IP del servidor DNS remoto")
-parser.add_argument("-p", "--predeterminado",type=str, help="Puerto local para escuchar las consultas DNS entrantes")
+parser.add_argument("-n", "--predeterminado", nargs='+', help="Respuestas DNS predeterminadas")
 args = parser.parse_args()
+
+
 # Configura el servidor DNS remoto
 REMOTE_DNS_SERVER = (args.server, 53)
 
 #configuro la respuesta predeterminada
-mapeo_predeterminado = {}
 if args.predeterminado is not None:
-    domain, response = args.predeterminado.split(":")
-    mapeo_predeterminado[domain] = response
+    mapeo_predeterminado = config_predet(args.predeterminado)
 
 # Función para manejar las consultas DNS
 def handle_dns_query(data, client_address):
     # Crea un socket UDP para enviar la consulta al servidor DNS remoto
     remote_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    if(data.decode() in mapeo_predeterminado):
+        rta_predet = mapeo_predeterminado[data.decode()]
+        server_socket.sendto(rta_predet, client_address)
+    else:
+        try:
+            # Envía la consulta DNS al servidor DNS remoto
+            remote_socket.sendto(data, REMOTE_DNS_SERVER)
 
-    try:
-        # Envía la consulta DNS al servidor DNS remoto
-        remote_socket.sendto(data, REMOTE_DNS_SERVER)
+            # Recibe la respuesta del servidor DNS remoto
+            response, _ = remote_socket.recvfrom(4096)
+            
+            # Transmite la respuesta sin modificaciones al cliente original
+            server_socket.sendto(response, client_address)
 
-        # Recibe la respuesta del servidor DNS remoto
-        response, _ = remote_socket.recvfrom(4096)
-        
-        # Transmite la respuesta sin modificaciones al cliente original
-        server_socket.sendto(response, client_address)
-
-    finally:
-        remote_socket.close()
+        finally:
+            remote_socket.close()
 
 # Crea un socket UDP para escuchar las consultas DNS entrantes
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
