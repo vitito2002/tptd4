@@ -56,4 +56,4 @@ while True:
     
 
     # Maneja la consulta DNS en un nuevo hilo para permitir conexiones simultáneas
-    threading.Thread(target=handle_dns_query, args=(data, client_address)).start()
+  #  threading.Thread(target=handle_dns_query, args=(data, client_address)).start()
