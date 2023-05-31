@@ -1,54 +1,28 @@
-#import scapy
-from scapy.all import *
+import argparse
 
-dns_req = IP(dst='8.8.8.8')
-UDP(dport=53)
-DNS(rd=1, qd=DNSQR(qname='www.thepacketgeek.com'))
-answer = sr1(dns_req, verbose=0)
+def config_predet(lista:list):
+    res: dict = {}
+    for direccion in lista:
+        for aux in direccion:
+            separador = ":"
+            resultado = aux.split(separador)
+            if len(resultado) == 2:
+                clave, valor = resultado
+                res[clave] = valor
+    return res
 
-import dns.message
-import dns.query
-import socketserver
-import threading
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="DNS Proxy Server")
+    parser.add_argument('-d', '--mappred', nargs="+", action='append',  help='Default domain-to-IP mappings')
+    return parser.parse_args()
 
-class DNSProxyHandler(socketserver.BaseRequestHandler):
-    def handle(self):
-        # Recibir la query DNS del cliente
-        data = self.request[0]
-        socket = self.request[1]
+if __name__ == "__main__":
+    args = parse_arguments()
+    if args.mappred is not None:
 
-        # Crear una consulta DNS basada en los datos recibidos
-        query = dns.message.from_wire(data)
-
-        # Enviar la consulta al servidor DNS legítimo remoto
-        response = dns.query.tcp(query, 'IP_DEL_SERVIDOR_DNS_LEGITIMO')
-
-        # Transmitir la respuesta del servidor DNS legítimo al cliente original
-        socket.sendto(response.to_wire(), self.client_address)
-
-class DNSProxyServer(socketserver.ThreadingUDPServer):
-    allow_reuse_address = True
-
-    def server_activate(self):
-        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.socket.bind(self.server_address)
-
-    def finish_request(self, request, client_address):
-        DNSProxyHandler(request, client_address)
-
-    def serve_forever(self):
-        self.__shutdown_request = False
-        self.__is_shut_down = threading.Event()
-
-        while not self.__shutdown_request:
-            self.handle_request()
-
-        self.__is_shut_down.set()
-
-    def shutdown(self):
-        self.__shutdown_request = True
-        self.__is_shut_down.wait()
-
-if __name__ == '__main__':
-    server = DNSProxyServer(('TU_DIRECCION_IP', PUERTO), DNSProxyHandler)
-    server.serve_forever()
+        default_mappings = {} #Se crea un diccionario vacío para almacenar los mapeos predeterminados de dominios a direcciones IP.
+        default_mappings = config_predet(args.mappred)
+        #if args.default_mapping: #Si se proporcionaron mapeos predeterminados a través de los argumentos de línea de comando, se itera sobre ellos y se agrega al diccionario
+        #   for domain, ip in args.default_mapping: 
+        #      default_mappings[domain] = ip
+        print(default_mappings)

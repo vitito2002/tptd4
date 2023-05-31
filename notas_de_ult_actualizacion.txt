@@ -1,4 +1,0 @@
-en ParserPruebas esta la funcion que transforma args.predeterminado en un diccionario 
-y puede tomar muchos predeterminados como entrada osea que funciona para n mapeos predeterminados
-
-en workingdns.py esta el servidor dns que funciona (no anda lo de predeterminado)
