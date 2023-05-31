@@ -6,10 +6,9 @@ import argparse
 from scapy.layers.dns import DNS, DNSQR, UDP, IP
 
 class DNSProxy:
-    def _init_(self, remote_dns_ip, default_mappings):
+    def __init__(self, remote_dns_ip, default_mappings):
         self.remote_dns_ip = remote_dns_ip
         self.default_mappings = default_mappings or {}
-
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.server_socket.bind(('', 53))
 
@@ -41,10 +40,10 @@ class DNSProxy:
 def parse_arguments():
     parser = argparse.ArgumentParser(description="DNS Proxy Server")
     parser.add_argument('-s', '--remote-dns', help='Remote DNS server IP', required=True)
-    parser.add_argument('-d', '--default-mapping', nargs=2, action='append', metavar=('domain', 'ip'), help='Default domain-to-IP mappings')
+    parser.add_argument('-d', '--default-mapping', nargs="+", action='append', metavar=('domain', 'ip'), help='Default domain-to-IP mappings')
     return parser.parse_args()
     
-if _name_ == "_main_":
+if __name__ == "_main_":
     args = parse_arguments() #obtengo arg x linea de comando
     remote_dns_ip = args.remote_dns #Se extrae la dirección IP del servidor DNS remoto de los argumentos.
     
