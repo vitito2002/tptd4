@@ -4,6 +4,12 @@ import argparse
 from funciones import*
 from scapy.all import DNS, DNSQR, DNSRR, IP, send, sniff, sr1, UDP
 
+IFACE = "lo0"   # Or your default interface
+DNS_SERVER_IP = "192.168.0.17"  # Your local IP
+
+BPF_FILTER = f"udp port 53 and ip dst {DNS_SERVER_IP}" #captura únicamente pkt UDP dirigidos a puerto 53 con IP del DNS local
+
+
 parser = argparse.ArgumentParser(description="Servidor proxy DNS")
 parser.add_argument("-s", "--server", required=True, help="Dirección IP del servidor DNS remoto")
 parser.add_argument("-n", "--predeterminado", nargs='+', help="Respuestas DNS predeterminadas")
