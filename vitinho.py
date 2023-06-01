@@ -26,6 +26,8 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description="Servidor proxy DNS")
     parser.add_argument("-s", "--server", dest="remote_dns_ip", required=True, help="Dirección IP del servidor DNS remoto")
     parser.add_argument("-p", "--port", dest="local_port", type=int, default=53, help="Puerto local para escuchar las consultas DNS entrantes")
+    parser.add_argument('-d', '--default-mapping', nargs=2, action='append', metavar=('domain', 'ip'), help='Default domain-to-IP mappings')
+
     return parser.parse_args()
 
 if __name__ == "__main__":

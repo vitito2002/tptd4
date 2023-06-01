@@ -36,7 +36,9 @@ class DNSProxy:
         print(dns_query)
 
         if client_query[DNSQR].qname.decode() in self.mapred: #si esta mapeada la query se genera la respuesta predeterminada
-            dns_response = IP() / UDP() / DNS(rd=1, id=client_query[DNS].id, qr=1, qdcount=1, ancount=1, qd=DNSQR(qname=client_query[DNSQR].qname), an=DNSRR(rrname=client_query[DNSQR].qname, ttl=10, rdata=mapred[client_query[DNSQR].qname]))   
+            #dns_response = IP() / UDP() / DNS(rd=1, id=client_query[DNS].id, qr=1, qdcount=1, ancount=1, qd=DNSQR(qname=client_query[DNSQR].qname), an=DNSRR(rrname=client_query[DNSQR].qname, ttl=10, rdata=mapred[client_query[DNSQR].qname]))   
+            dns_response = IP() / UDP() / DNS(rd=1, id=client_query[DNS].id, qr=1, qdcount=1, ancount=1, qd=DNSQR(qname=client_query[DNSQR].qname.decode()), an=DNSRR(rrname=client_query[DNSQR].qname.decode(), ttl=10, rdata=self.mapred[client_query[DNSQR].qname.decode()]))
+
         else:
             dns_response = sr1(dns_query, verbose=0) #envía la consulta al servidor DNS remoto y espera la respuesta.
         
@@ -65,6 +67,7 @@ if __name__ == "__main__":
     remote_dns_ip = args.remote_dns #Se extrae la dirección IP del servidor DNS remoto de los argumentos.
     
     #configuro la respuesta predeterminada
+    mapred = {}
     if args.mapred is not None:
         #Se crea un diccionario con los argumentos pasados por consola
         mapred = config_predet(args.mapred)
